@@ -39,7 +39,7 @@ class MyEpisodes(MycroftSkill):
         if not self.isConfigured():
             return
         self.speak_dialog("querying")
-        feedData = self.getUnacquired()
+        feedData, epData = self.getUnacquired()
 
         if feedData['total'] == 0:
             self.speak_dialog('noNewEpisodes', data={'type': "unacquired"})
@@ -50,11 +50,11 @@ class MyEpisodes(MycroftSkill):
         else:
             self.speak_dialog('unacquiredEpisodes', data=feedData)
 
-        self.speakEpisodesDetails(feedData)
+        self.speakEpisodesDetails(epData)
         wait_while_speaking()
 
         if self.settings.get("useWatched"):
-            feedData = self.getUnwatched()
+            feedData, _ = self.getUnwatched()
             if feedData['total'] > 0:
                 self.speak_dialog("unwatchedEpisodes", data=feedData)
 
@@ -158,13 +158,12 @@ class MyEpisodes(MycroftSkill):
                             cnt = cnt + 1
                             episodes2speak.append(sq)
                     episodes2speak.append(', ')
-        return {
-            'episodes': episodes,
-            'episodes2speak': episodes2speak,
-            'total': totalCnt,
-            'plural': 's' if totalCnt > 1 else '',
-            'airingToday': airingTodayCnt
-        }
+        feedData = {'total': totalCnt,
+                    'plural': 's' if totalCnt > 1 else '',
+                    'airingToday': airingTodayCnt}
+        epData = {'episodes': episodes,
+                  'episodes2speak': episodes2speak}
+        return feedData, epData
 
     def _speakEpRange(self, minEp, maxEp):
         if minEp == maxEp:
