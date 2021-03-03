@@ -166,8 +166,7 @@ class MyEpisodes(MycroftSkill):
             'episodes2speak': episodes2speak,
             'total': totalCnt,
             'plural': 's' if totalCnt > 1 else '',
-            'airingToday': airingTodayCnt,
-            'updatedAt': datetime.datetime.now().date()
+            'airingToday': airingTodayCnt
         }
 
     def _speakEpRange(self, minEp, maxEp):
