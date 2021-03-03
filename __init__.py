@@ -46,27 +46,24 @@ class MyEpisodes(MycroftSkill):
             return
 
         if feedData['airingToday'] > 0:
-            self.speak_dialog('unacquiredEpisodesWithAiringToday',
-                              data=feedData)
+            self.speak_dialog('unacquiredEpisodesWithAiringToday', data=feedData)
         else:
-            self.speak_dialog('unacquiredEpisodes',
-                              data=feedData)
+            self.speak_dialog('unacquiredEpisodes', data=feedData)
 
-        self.speakEpisodesDetails(feedData['episodes2speak'])
+        self.speakEpisodesDetails(feedData)
         wait_while_speaking()
 
         if self.settings.get("useWatched"):
             feedData = self.getUnwatched()
             if feedData['total'] > 0:
-                self.speak_dialog("unwatchedEpisodes",
-                                  data=feedData)
+                self.speak_dialog("unwatchedEpisodes", data=feedData)
 
     def stop(self):
         return True
 
-    def speakEpisodesDetails(self, eps):
+    def speakEpisodesDetails(self, data):
         if self.ask_yesno("details") == 'yes':
-            self.speak(''.join(eps))
+            self.speak(''.join(data['episodes2speak']))
         else:
             self.speak_dialog('ok')
 
