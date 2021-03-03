@@ -43,8 +43,6 @@ class MyEpisodes(MycroftSkill):
             return
         self.speak_dialog("querying")
         self.updateUnacquired()
-        if self.settings.get("useWatched"):
-            self.updateUnwatched()
         if self.unacquired['totalCnt'] == 0:
             self.speak_dialog('noNewEpisodes', data={'type': "unacquired"})
             return
@@ -60,11 +58,14 @@ class MyEpisodes(MycroftSkill):
 
         self.speakEpisodesDetails(self.unacquired['episodes2speak'])
         wait_while_speaking()
-        if self.settings.get("useWatched") and self.unwatched['totalCnt'] > 0:
-            self.speak_dialog("unwatchedEpisodes",
-                              data={'total': self.unwatched['totalCnt'],
-                                    'plural': 's' if self.unwatched['totalCnt'] > 1 else '',
-                                    'airingToday': self.unacquired['airingTodayCnt']})
+
+        if self.settings.get("useWatched"):
+            self.updateUnwatched()
+            if self.unwatched['totalCnt'] > 0:
+                self.speak_dialog("unwatchedEpisodes",
+                                  data={'total': self.unwatched['totalCnt'],
+                                        'plural': 's' if self.unwatched['totalCnt'] > 1 else '',
+                                        'airingToday': self.unacquired['airingTodayCnt']})
 
     def stop(self):
         return True
@@ -192,10 +193,10 @@ class MyEpisodes(MycroftSkill):
             return feed
 
     def updateUnwatched(self):
-        self.unwatched = self.update("unwatched")
+        self.unwatched = self.processFeed(self.update("unwatched"))
 
     def updateUnacquired(self):
-        self.unacquired = self.update("unacquired")
+        self.unacquired = self.processFeed(self.update("unacquired"))
 
     def getFeed(self, type):
         self.log.debug("Requesting feed")
