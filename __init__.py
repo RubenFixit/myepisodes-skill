@@ -62,7 +62,7 @@ class MyEpisodes(MycroftSkill):
         return True
 
     def speakEpisodesDetails(self, data):
-        if data['episodes'] > self.settings.get('epAskCnt'):
+        if len(data['episodes']) <= self.settings.get('epAskCnt'):
             self.speak(''.join(data['episodes2speak']))
         elif self.ask_yesno("details") == 'yes':
             self.speak(''.join(data['episodes2speak']))

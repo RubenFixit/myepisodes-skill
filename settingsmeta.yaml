@@ -3,16 +3,16 @@ skillMetadata:
   sections:
     - name: MyEpisodes.com Credentials
       fields:
+        - type: label
+          value: Your myepisodes.com username and MD5 hashed password. (Info can be found at https://www.myepisodes.com/account/controlpanel/)
         - name: username
           label: Username
           type: text
-          hint: Your myepisodes.com username
           value: ""
           placeholder: ""
         - name: pwhash
           label: MD5 hashed password
           type: password
-          hint: Your myepisodes.com MD5 hashed password
           value: ""
           placeholder: ""
     - name: Options
@@ -20,10 +20,12 @@ skillMetadata:
         - name: useWatched
           label: Get Unwatched
           type: checkbox
-          hint: Also check for unwatched shows
           value: "true"
+        - type: label
+          value: Also check for unwatched shows.
         - name: epAskCnt
-          label: Ask Episode Count
+          label: Details Max Episodes
           type: number
           value: 2
-          hint: Ask for details if there are more than this number of episode.
+        - type: label
+          value: Ask for details if there are more than this number of episode.
