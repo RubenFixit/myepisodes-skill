@@ -4,18 +4,26 @@ skillMetadata:
     - name: MyEpisodes.com Credentials
       fields:
         - name: username
+          label: Username
           type: text
-          label: Your myepisodes.com username
+          hint: Your myepisodes.com username
           value: ""
           placeholder: ""
         - name: pwhash
+          label: MD5 hashed password
           type: password
-          label: Your myepisodes.com MD5 hashed password
+          hint: Your myepisodes.com MD5 hashed password
           value: ""
           placeholder: ""
     - name: Options
       fields:
         - name: useWatched
+          label: Get Unwatched
           type: checkbox
-          label: Also check for unwatched shows
+          hint: Also check for unwatched shows
           value: "true"
+        - name: epAskCnt
+          label: Ask Episode Count
+          type: number
+          value: 2
+          hint: Ask for details if there are more than this number of episode.
