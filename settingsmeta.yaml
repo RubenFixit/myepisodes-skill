@@ -8,9 +8,9 @@ skillMetadata:
           label: Your myepisodes.com username
           value: ""
           placeholder: ""
-        - name: password
+        - name: md5password
           type: password
-          label: Your myepisodes.com password
+          label: Your myepisodes.com MD5 hashed password
           value: ""
           placeholder: ""
     - name: Options

@@ -3,7 +3,6 @@ from mycroft.skills.core import MycroftSkill, intent_handler, FallbackSkill
 from mycroft.util.log import LOG
 from mycroft.audio import wait_while_speaking
 import feedparser
-import hashlib
 import datetime
 
 __author__ = 'BreziCode'
@@ -202,10 +201,9 @@ class MyEpisodes(MycroftSkill):
         if not self.isConfigured():
             return False
         user = self.settings.get("username")
-        pwHash = hashlib.md5(self.settings.get(
-            "password").encode()).hexdigest()
+        pwHash = self.settings.get("md5password")
         feedURL = "http://www.myepisodes.com/rss.php?feed=" + \
-            type+"&uid=" + user+"&pwdmd5="+pwHash+"&showignored=0"
+            type+"&uid="+user+"&pwdmd5="+pwHash+"&showignored=0"
         self.log.debug("Using feed URL: %s" % (feedURL))
         feed = feedparser.parse(feedURL)
         if feed.status is not 200:
@@ -221,7 +219,7 @@ class MyEpisodes(MycroftSkill):
             return feed
 
     def isConfigured(self):
-        if 'username' not in self.settings or 'password'not in self.settings:
+        if 'username' not in self.settings or 'md5password'not in self.settings:
             self.log.error("Skill not configured")
             self.speak_dialog("notSetUp")
             return False
