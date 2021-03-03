@@ -16,7 +16,7 @@ skillMetadata:
     - name: Options
       fields:
         - name: useWatched
-          label: Also check for unwatched shows.
+          label: Treat unaquired as unwatched shows
           type: checkbox
           value: "true"
         - type: label

@@ -41,19 +41,22 @@ class MyEpisodes(MycroftSkill):
         self.speak_dialog("querying")
         feedData, epData = self.getUnacquired()
 
+        if self.settings.get("useWatched"):
+            feedData['type'] = "unwatched"
+
         if feedData['total'] == 0:
-            self.speak_dialog('noNewEpisodes', data={'type': "unacquired"})
+            self.speak_dialog('noNewEpisodes', data=feedData)
             return
 
         if feedData['airingToday'] > 0:
-            self.speak_dialog('unacquiredEpisodesWithAiringToday', data=feedData)
+            self.speak_dialog('newEpisodesWithAiringToday', data=feedData)
         else:
-            self.speak_dialog('unacquiredEpisodes', data=feedData)
+            self.speak_dialog('newEpisodes', data=feedData)
 
         self.speakEpisodesDetails(epData)
         wait_while_speaking()
 
-        if self.settings.get("useWatched"):
+        if not self.settings.get("useWatched"):
             feedData, _ = self.getUnwatched()
             if feedData['total'] > 0:
                 self.speak_dialog("unwatchedEpisodes", data=feedData)
@@ -160,7 +163,8 @@ class MyEpisodes(MycroftSkill):
                             cnt = cnt + 1
                             episodes2speak.append(sq)
                     episodes2speak.append(', ')
-        feedData = {'total': totalCnt,
+        feedData = {'type': feed['type'],
+                    'total': totalCnt,
                     'plural': 's' if totalCnt > 1 else '',
                     'airingToday': airingTodayCnt}
         epData = {'episodes': episodes,
@@ -203,6 +207,7 @@ class MyEpisodes(MycroftSkill):
         else:
             self.log.debug("Got %s items from %s feed" %
                            (len(feed.entries), feedtype))
+            feed['type'] = feedtype
             return feed
 
     def isConfigured(self):
