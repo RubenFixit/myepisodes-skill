@@ -27,9 +27,6 @@ class MyEpisodes(MycroftSkill):
 
     def __init__(self):
         super(MyEpisodes, self).__init__(name="MyEpisodes")
-        self.unacquired = {}
-        self.unwatched = {}
-        self.shows = {}
 
     def initialize(self):
         if "useWatched" not in self.settings:
@@ -42,30 +39,27 @@ class MyEpisodes(MycroftSkill):
         if not self.isConfigured():
             return
         self.speak_dialog("querying")
-        self.updateUnacquired()
-        if self.unacquired['totalCnt'] == 0:
+        feedData = self.getUnacquired()
+
+        if feedData['totalCnt'] == 0:
             self.speak_dialog('noNewEpisodes', data={'type': "unacquired"})
             return
-        if self.unacquired['airingTodayCnt'] > 0:
+
+        if feedData['airingTodayCnt'] > 0:
             self.speak_dialog('unacquiredEpisodesWithAiringToday',
-                              data={'total': self.unacquired['totalCnt'],
-                                    'plural': 's' if self.unacquired['totalCnt'] > 1 else '',
-                                    'airingToday': self.unacquired['airingTodayCnt']})
+                              data=feedData)
         else:
             self.speak_dialog('unacquiredEpisodes',
-                              data={'total': self.unacquired['totalCnt'],
-                                    'plural': 's' if self.unacquired['totalCnt'] > 1 else ''})
+                              data=feedData)
 
-        self.speakEpisodesDetails(self.unacquired['episodes2speak'])
+        self.speakEpisodesDetails(feedData['episodes2speak'])
         wait_while_speaking()
 
         if self.settings.get("useWatched"):
-            self.updateUnwatched()
+            feedData = self.getUnwatched()
             if self.unwatched['totalCnt'] > 0:
                 self.speak_dialog("unwatchedEpisodes",
-                                  data={'total': self.unwatched['totalCnt'],
-                                        'plural': 's' if self.unwatched['totalCnt'] > 1 else '',
-                                        'airingToday': self.unacquired['airingTodayCnt']})
+                                  data=feedData)
 
     def stop(self):
         return True
@@ -78,6 +72,7 @@ class MyEpisodes(MycroftSkill):
 
     def processFeed(self, feed):
         episodes = {}
+        shows = {}
         tmp_episodes = {}
         totalCnt = 0
         airingTodayCnt = 0
@@ -90,7 +85,7 @@ class MyEpisodes(MycroftSkill):
                     break
                 epGuidArr = entry.guid.split('-')
                 if(len(epGuidArr) != 3):
-                    self.log.error("Error parsing episode "+entry.guid)
+                    self.log.error("Error parsing episode " + entry.guid)
                     continue
                 showId = epGuidArr[0]
                 season = int(epGuidArr[1])
@@ -104,8 +99,8 @@ class MyEpisodes(MycroftSkill):
                     continue
                 else:
                     showName = epTitleArray[0].replace('[', '').strip()
-                    if showName not in self.shows:
-                        self.shows[showId] = showName
+                    if showName not in shows:
+                        shows[showId] = showName
                     epMeta['epTitle'] = epTitleArray[2].strip()
 
                     airDate = epTitleArray[3].replace(
@@ -135,7 +130,7 @@ class MyEpisodes(MycroftSkill):
         episodes2speak = []
         if totalCnt > 0:
             for showId in tmp_episodes:
-                episodes2speak.append("%s " % self.shows[showId])
+                episodes2speak.append("%s " % shows[showId])
                 for season in tmp_episodes[showId]:
                     episodes2speak.append("season %s, " % season)
                     season = tmp_episodes[showId][season]
@@ -170,6 +165,7 @@ class MyEpisodes(MycroftSkill):
             'episodes': episodes,
             'episodes2speak': episodes2speak,
             'totalCnt': totalCnt,
+            'plural': 's' if totalCnt > 1 else '',
             'airingTodayCnt': airingTodayCnt,
             'updatedAt': datetime.datetime.now().date()
         }
@@ -182,30 +178,20 @@ class MyEpisodes(MycroftSkill):
         else:
             return "episodes %s through %s" % (minEp, maxEp)
 
-    def update(self, feedtype):
+    def getUnwatched(self):
+        return self.processFeed(self.getFeed("unwatched"))
+
+    def getUnacquired(self):
+        return self.processFeed(self.getFeed("unacquired"))
+
+    def getFeed(self, feedtype):
         self.log.debug("Updating %s episodes list" % (feedtype))
-        if not self.isConfigured():
-            return False
-        feed = self.getFeed(feedtype)
-        if feed:
-            self.log.debug("Got %s items from %s feed" %
-                           (len(feed.entries), feedtype))
-            return feed
-
-    def updateUnwatched(self):
-        self.unwatched = self.processFeed(self.update("unwatched"))
-
-    def updateUnacquired(self):
-        self.unacquired = self.processFeed(self.update("unacquired"))
-
-    def getFeed(self, type):
-        self.log.debug("Requesting feed")
         if not self.isConfigured():
             return False
         user = self.settings.get("username")
         pwHash = self.settings.get("pwhash")
         feedURL = "http://www.myepisodes.com/rss.php?feed=" + \
-            type + "&uid=" + user + "&pwdmd5=" + pwHash + "&showignored=0"
+            feedtype + "&uid=" + user + "&pwdmd5=" + pwHash + "&showignored=0"
         self.log.debug("Using feed URL: %s" % (feedURL))
         feed = feedparser.parse(feedURL)
         if feed.status is not 200:
@@ -218,6 +204,8 @@ class MyEpisodes(MycroftSkill):
                 self.log.exception(feed.bozo_exception)
             self.speak_dialog('errorParseFeed')
         else:
+            self.log.debug("Got %s items from %s feed" %
+                           (len(feed.entries), feedtype))
             return feed
 
     def isConfigured(self):
