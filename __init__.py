@@ -36,8 +36,8 @@ class MyEpisodes(MycroftSkill):
             self.settings["useWatched"] = False
 
     @intent_handler(IntentBuilder("query")
-        .require("check")
-        .require("episodes"))
+                    .require("check")
+                    .require("episodes"))
     def handle_query_intent(self, message):
         if not self.isConfigured():
             return
@@ -45,21 +45,26 @@ class MyEpisodes(MycroftSkill):
         self.updateUnacquired()
         if self.settings.get("useWatched"):
             self.updateUnwatched()
-        type = "unacquired"
         if self.unacquired['totalCnt'] == 0:
-            self.speak_dialog('noNewEpisodes', data={'type': type})
+            self.speak_dialog('noNewEpisodes', data={'type': "unacquired"})
             return
         if self.unacquired['airingTodayCnt'] > 0:
-            self.speak_dialog('unacquiredEpisodesWithAiringToday', data={
-                              'total': self.unacquired['totalCnt'], 'plural': 's' if self.unacquired['totalCnt'] > 1 else '', 'airingToday': self.unacquired['airingTodayCnt']})
+            self.speak_dialog('unacquiredEpisodesWithAiringToday',
+                              data={'total': self.unacquired['totalCnt'],
+                                    'plural': 's' if self.unacquired['totalCnt'] > 1 else '',
+                                    'airingToday': self.unacquired['airingTodayCnt']})
         else:
-            self.speak_dialog('unacquiredEpisodes', data={
-                              'total': self.unacquired['totalCnt'], 'plural': 's' if self.unacquired['totalCnt'] > 1 else ''})
+            self.speak_dialog('unacquiredEpisodes',
+                              data={'total': self.unacquired['totalCnt'],
+                                    'plural': 's' if self.unacquired['totalCnt'] > 1 else ''})
+
         self.speakEpisodesDetails(self.unacquired['episodes2speak'])
         wait_while_speaking()
         if self.settings.get("useWatched") and self.unwatched['totalCnt'] > 0:
-            self.speak_dialog("unwatchedEpisodes", data={
-                              'total': self.unwatched['totalCnt'], 'plural': 's' if self.unwatched['totalCnt'] > 1 else '', 'airingToday': self.unacquired['airingTodayCnt']})
+            self.speak_dialog("unwatchedEpisodes",
+                              data={'total': self.unwatched['totalCnt'],
+                                    'plural': 's' if self.unwatched['totalCnt'] > 1 else '',
+                                    'airingToday': self.unacquired['airingTodayCnt']})
 
     def stop(self):
         return True
@@ -142,18 +147,18 @@ class MyEpisodes(MycroftSkill):
                         if season[i] == (endEp + 1):
                             endEp = season[i]
                         else:
-                            seq.append(self._speakEpRange(startEp,endEp))
+                            seq.append(self._speakEpRange(startEp, endEp))
                             startEp = season[i]
                             endEp = startEp
                         i = i + 1
-                    seq.append(self._speakEpRange(startEp,endEp))
+                    seq.append(self._speakEpRange(startEp, endEp))
                     if len(seq) == 1:
                         episodes2speak.append(seq[0])
                     else:
                         cnt = 0
                         for sq in seq:
-                            if cnt > 0 :
-                                if cnt < len(seq)-1:
+                            if cnt > 0:
+                                if cnt < len(seq) - 1:
                                     sq = ", %s" % sq
                                 else:
                                     sq = " and %s " % sq
@@ -176,34 +181,30 @@ class MyEpisodes(MycroftSkill):
         else:
             return "episodes %s through %s" % (minEp, maxEp)
 
-    def updateUnacquired(self):
-        self.log.debug("Updating unacquired episodes list")
+    def update(self, feedtype):
+        self.log.debug("Updating %s episodes list" % (feedtype))
         if not self.isConfigured():
             return False
-        feed = self.getFeed("unacquired")
+        feed = self.getFeed(feedtype)
         if feed:
-            self.log.debug("Got %s items from unacquired feed" %
-                           (len(feed.entries)))
-            self.unacquired = self.processFeed(feed)
+            self.log.debug("Got %s items from %s feed" %
+                           (len(feed.entries), feedtype))
+            return feed
 
     def updateUnwatched(self):
-        self.log.debug("Updating unwatched episodes list")
-        if not self.isConfigured():
-            return False
-        feed = self.getFeed("unwatched")
-        if feed:
-            self.log.debug("Got %s items from unwatched feed" %
-                           (len(feed.entries)))
-            self.unwatched = self.processFeed(feed)
+        self.unwatched = self.update("unwatched")
+
+    def updateUnacquired(self):
+        self.unacquired = self.update("unacquired")
 
     def getFeed(self, type):
         self.log.debug("Requesting feed")
         if not self.isConfigured():
             return False
         user = self.settings.get("username")
-        pwHash = self.settings.get("md5password")
+        pwHash = self.settings.get("pwhash")
         feedURL = "http://www.myepisodes.com/rss.php?feed=" + \
-            type+"&uid="+user+"&pwdmd5="+pwHash+"&showignored=0"
+            type + "&uid=" + user + "&pwdmd5=" + pwHash + "&showignored=0"
         self.log.debug("Using feed URL: %s" % (feedURL))
         feed = feedparser.parse(feedURL)
         if feed.status is not 200:
@@ -213,17 +214,18 @@ class MyEpisodes(MycroftSkill):
         elif feed.bozo:
             self.log.error("Error parsing RSS feed.")
             if hasattr(feed, 'bozo_exception'):
-                self.log.exception(feed.bozo_exception) 
+                self.log.exception(feed.bozo_exception)
             self.speak_dialog('errorParseFeed')
         else:
             return feed
 
     def isConfigured(self):
-        if 'username' not in self.settings or 'md5password'not in self.settings:
+        if 'username' not in self.settings or 'pwhash' not in self.settings:
             self.log.error("Skill not configured")
             self.speak_dialog("notSetUp")
             return False
         return True
-        
+
+
 def create_skill():
     return MyEpisodes()
